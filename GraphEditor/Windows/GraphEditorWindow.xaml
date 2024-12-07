@@ -15,8 +15,8 @@
                 MouseMove="GraphCanvas_MouseMove"
                 MouseUp="GraphCanvas_MouseUp"/>
         <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Center">
-            <Button Content="Загрузить" Click="SaveButton_Click" Margin="5"/>
-            <Button Content="Сохранить" Click="LoadButton_Click" Margin="5"/>
+            <Button Content="Сохранить" Click="SaveButton_Click" Margin="5"/>
+            <Button Content="Загрузить" Click="LoadButton_Click" Margin="5"/>
             <Button Content="Очистить" Click="ClearButton_Click" Margin="5"/>
         </StackPanel>
     </Grid>

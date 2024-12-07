@@ -1,6 +1,8 @@
 ﻿using GraphEditor.Elements;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -204,12 +206,135 @@ namespace GraphEditor.Windows
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-            // TODO
+            // Комменты будут потом
+            SaveFileDialog saveFileDialog = new()
+            {
+                Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
+                DefaultExt = ".csv",
+                FileName = "graph"
+            };
+
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                string filePath = saveFileDialog.FileName;
+
+                using StreamWriter writer = new(filePath);
+
+                writer.Write(";");
+                writer.WriteLine(string.Join(";", graph.Vertices.Select(vertex => vertex.Id.ToString())));
+
+                foreach (var firstVertex in graph.Vertices)
+                {
+                    List<string> row = [ firstVertex.Id.ToString() ];
+
+                    foreach (var secondVertex in graph.Vertices)
+                    {
+                        Edge? edge = graph.Edges.FirstOrDefault(edge => 
+                            (edge.Start == firstVertex && edge.End == secondVertex) || 
+                            (edge.Start == secondVertex && edge.End == firstVertex));
+
+                        row.Add(edge != null ? edge.Weight.ToString() : "0");
+                    }
+
+                    writer.WriteLine(string.Join(";", row));
+                }
+
+                writer.WriteLine();
+
+                writer.Write(";");
+                writer.WriteLine(string.Join(";", graph.Vertices.Select(vertex => vertex.Id.ToString())));
+
+                writer.Write("X;");
+                writer.WriteLine(string.Join(";", graph.Vertices.Select(vertex => vertex.X.ToString())));
+
+                writer.Write("Y;");
+                writer.WriteLine(string.Join(";", graph.Vertices.Select(vertex => vertex.Y.ToString())));
+            }
         }
 
         private void LoadButton_Click(object sender, RoutedEventArgs e)
         {
-            // TODO
+            // Комменты будут потом
+            OpenFileDialog openFileDialog = new()
+            {
+                Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
+                DefaultExt = ".csv"
+            };
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                string filePath = openFileDialog.FileName;
+
+                using StreamReader reader = new(filePath);
+
+                string? header = reader.ReadLine();
+                List<int> ids = header!.Split(";").Skip(1).Select(id => int.Parse(id.Trim())).ToList();
+                List<Edge> edges = [];
+                List<Vertex> loadedVertices = [];
+
+                loadedVertices.AddRange(ids.Select(id => new Vertex(id, 0, 0)));
+
+                int row = 0;
+
+                while (true)
+                {
+                    string? rowLine = reader.ReadLine();
+
+                    if (rowLine!.Equals("")) { break; }
+
+                    List<int> weights = rowLine!.Split(";").Skip(1).Select(weight => int.Parse(weight.Trim())).ToList();
+
+                    for (int column = 0; column < weights.Count; column++)
+                    {
+                        int weight = weights[column];
+
+                        if (weight != 0)
+                        {
+                            Vertex startVertex = loadedVertices[row];
+                            Vertex endVertex = loadedVertices[column];
+
+                            Edge edge = new(startVertex, endVertex)
+                            {
+                                Weight = weight
+                            };
+
+                            edges.Add(edge);
+                        }
+                    }
+                    row++;
+                }
+
+                reader.ReadLine();
+
+                string? xLine = reader.ReadLine();
+                List<double> xCoordinates = xLine!.Split(";").Skip(1).Select(coordinate => double.Parse(coordinate.Trim())).ToList();
+
+                string? yLine = reader.ReadLine();
+                List<double> yCoordinates = yLine!.Split(";").Skip(1).Select(coordinate => double.Parse(coordinate.Trim())).ToList();
+
+                for (int i = 0; i < loadedVertices.Count; i++)
+                {
+                    loadedVertices[i].X = xCoordinates[i];
+                    loadedVertices[i].Y = yCoordinates[i];
+                }
+
+                graph.Vertices.Clear();
+                graph.Edges.Clear();
+
+                foreach (var vertex in loadedVertices)
+                {
+                    graph.AddVertex(vertex);
+                }
+
+                foreach (var edge in edges)
+                {
+                    graph.AddEdge(edge);
+                }
+
+                vertexId = loadedVertices[^1].Id + 1;
+
+                RedrawGraph();
+            }
         }
 
         private void ClearButton_Click(object sender, RoutedEventArgs e)
