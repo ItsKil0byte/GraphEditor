@@ -25,7 +25,7 @@ namespace GraphEditor.Windows
         private Vertex? selectedVertex = null;
         private Edge? selectedEdge = null;
 
-        private int vertexId = 0;
+        private int vertexId = 1;
         private const double VertexRadius = 20;
 
         public GraphEditorWindow()
@@ -79,6 +79,14 @@ namespace GraphEditor.Windows
                 // Повторное нажатие на вершину
                 else
                 {
+                    IdWindow idWindow = new(clickedVertex.Id, graph.Vertices.Select(vertex => vertex.Id));
+
+                    if (idWindow.ShowDialog() == true)
+                    {
+                        clickedVertex.Id = idWindow.NewId;
+                        RedrawGraph();
+                    }
+
                     selectedVertex = null;
                 }
 
@@ -140,6 +148,11 @@ namespace GraphEditor.Windows
 
             selectedVertex = null;
             selectedEdge = null;
+
+            graph.Vertices.Clear();
+            graph.Edges.Clear();
+
+            vertexId = 1;
         }
 
         private void DrawVertex(Vertex vertex)
@@ -156,6 +169,21 @@ namespace GraphEditor.Windows
             Canvas.SetLeft(ellipse, vertex.X - VertexRadius);
             Canvas.SetTop(ellipse, vertex.Y - VertexRadius);
             GraphCanvas.Children.Add(ellipse);
+
+            TextBlock idTextBlock = new()
+            {
+                Text = vertex.Id.ToString(),
+            };
+
+            // Необходимо для корректного расчёта размеров TextBlock'ов
+            idTextBlock.LayoutUpdated += (s, e) =>
+            {
+                // Центрирование TextBlock'а в вершине
+                Canvas.SetLeft(idTextBlock, vertex.X - idTextBlock.ActualWidth / 2);
+                Canvas.SetTop(idTextBlock, vertex.Y - idTextBlock.ActualHeight / 2);
+            };
+
+            GraphCanvas.Children.Add(idTextBlock);
         }
 
         private void HighlightVertex(Vertex vertex)
@@ -166,7 +194,7 @@ namespace GraphEditor.Windows
                 Height = VertexRadius * 2,
                 Stroke = Brushes.Blue,
                 StrokeThickness = 3,
-                Fill = Brushes.LightBlue
+                Fill = Brushes.Transparent,
             };
 
             Canvas.SetLeft(highlightEllipse, vertex.X - VertexRadius);
