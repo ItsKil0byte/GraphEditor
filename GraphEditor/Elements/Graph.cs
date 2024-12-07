@@ -6,7 +6,18 @@
         public List<Edge> Edges { get; } = [];
 
         public void AddVertex(Vertex vertex) => Vertices.Add(vertex);
-        public void AddEdge(Edge edge) => Edges.Add(edge);
+
+        // NOTE: возможно будут переписаны все методы под bool
+        public bool AddEdge(Edge edge)
+        {
+            if (!Edges.Any(e => (e.Start == edge.Start && e.End == edge.End) || (e.Start == edge.End && e.End == edge.Start)))
+            {
+                Edges.Add(edge);
+                return true;
+            }
+
+            return false;
+        }
         public void RemoveVertex(Vertex vertex)
         {
             Edges.RemoveAll(e => e.Start == vertex || e.End == vertex);

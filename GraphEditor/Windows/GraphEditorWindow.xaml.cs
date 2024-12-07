@@ -28,6 +28,9 @@ namespace GraphEditor.Windows
         private int vertexId = 1;
         private const double VertexRadius = 20;
 
+        private Vertex? draggingVertex = null;
+        private bool isDragging = false;
+
         public GraphEditorWindow()
         {
             InitializeComponent();
@@ -36,10 +39,15 @@ namespace GraphEditor.Windows
         private void GraphCanvas_RightClick(object sender, MouseButtonEventArgs e)
         {
             Point position = e.GetPosition(GraphCanvas);
-            Vertex vertex = new(vertexId++, position.X, position.Y);
-            graph.AddVertex(vertex);
 
-            DrawVertex(vertex);
+            if (!IsPointNearVertex(position))
+            {
+                Vertex vertex = new(vertexId++, position.X, position.Y);
+                graph.AddVertex(vertex);
+
+                DrawVertex(vertex);
+            }
+
             selectedVertex = null;
             selectedEdge = null;
 
@@ -71,8 +79,10 @@ namespace GraphEditor.Windows
                 {
                     Edge edge = new(selectedVertex, clickedVertex);
 
-                    graph.AddEdge(edge);
-                    DrawEdge(edge);
+                    if (graph.AddEdge(edge))
+                    {
+                        DrawEdge(edge);
+                    }
 
                     selectedVertex = null;
                 }
@@ -147,6 +157,48 @@ namespace GraphEditor.Windows
                     RedrawGraph();
                     return;
                 }
+            }
+        }
+
+        private void GraphCanvas_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift))
+            {
+                Point clickPosition = e.GetPosition(GraphCanvas);
+
+                draggingVertex = graph.Vertices.FirstOrDefault(vertex => Math.Sqrt(Math.Pow(vertex.X - clickPosition.X, 2) + Math.Pow(vertex.Y - clickPosition.Y, 2)) < VertexRadius);
+
+                if (draggingVertex != null)
+                {
+                    isDragging = true;
+                    GraphCanvas.CaptureMouse();
+                }
+            }
+        }
+
+        private void GraphCanvas_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (isDragging && draggingVertex != null)
+            {
+                Point currentPosition = e.GetPosition(GraphCanvas);
+
+                // Обновляем координаты вершины
+                draggingVertex.X = currentPosition.X;
+                draggingVertex.Y = currentPosition.Y;
+
+                RedrawGraph();
+            }
+        }
+
+        private void GraphCanvas_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (isDragging)
+            {
+                isDragging = false;
+                draggingVertex = null;
+                GraphCanvas.ReleaseMouseCapture();
+
+                selectedVertex = null;
             }
         }
 
@@ -292,15 +344,32 @@ namespace GraphEditor.Windows
 
         private double DistanceToLine(Edge edge, Point point)
         {
-            // ААА ГЕОМЕТРИЯ
+            // ААА, ЕЩЁ БОЛЕЕ СТРАШНАЯ ГЕОМЕТРИЯ
+            // Не лезть, опасно для жизни
             double x1 = edge.Start.X, y1 = edge.Start.Y;
             double x2 = edge.End.X, y2 = edge.End.Y;
             double px = point.X, py = point.Y;
 
-            double numerator = Math.Abs((y2 - y1) * px - (x2 - x1) * py + x2 * y1 - y2 * x1);
-            double denominator = Math.Sqrt(Math.Pow(y2 - y1, 2) + Math.Pow(x2 - x1, 2));
+            // Вычисление вектора
+            double dx = x2 - x1, dy = y2 - y1;
 
-            return numerator / denominator;
+            // Длина вектора
+            double len = dx * dx + dy * dy;
+
+            // Проекция точки на прямую
+            double projection = Math.Max(0, Math.Min(1, ((px - x1) * dx + (py - y1) * dy) / len));
+
+            // Вычисление ближайшей точки
+            double projectionX = x1 + projection * dx;
+            double projectionY = y1 + projection * dy;
+
+            // Расстоняние от точки до ближайшей точки на отрезке
+            return Math.Sqrt(Math.Pow(px - projectionX, 2) + Math.Pow(py - projectionY, 2));
+        }
+
+        private bool IsPointNearVertex(Point point)
+        {
+            return graph.Vertices.Any(vertex => Math.Sqrt(Math.Pow(vertex.X - point.X, 2) + Math.Pow(vertex.Y - point.Y, 2)) < VertexRadius * 2);
         }
 
         private void ClearHighlight()
