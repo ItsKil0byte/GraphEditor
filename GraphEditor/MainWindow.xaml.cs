@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using GraphEditor.Windows;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -19,6 +20,12 @@ namespace GraphEditor
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void GraphButton_Click(object sender, RoutedEventArgs e)
+        {
+            Window window = new GraphEditorWindow();
+            window.Show();
         }
     }
 }

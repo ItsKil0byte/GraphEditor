@@ -5,8 +5,18 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GraphEditor"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="Лабораторная №5 | Выбор задания" Height="450" Width="350" ResizeMode="CanMinimize" FontSize="16">
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
 
+        <Label Content="Выберите задание:" FontWeight="Bold" FontSize="24" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+        <Button x:Name="GraphButton" Content="Редактор графов" Margin="15" FontWeight="Bold" Grid.Row="1" Click="GraphButton_Click"/>
+        <Button x:Name="TransportNetworksButton" Content="Редактор транспортных сетей" Margin="15" FontWeight="Bold" Grid.Row="2"/>
+        <Button x:Name="SpanningTreeButton" Content="Остовное дерево" Margin="15" FontWeight="Bold" Grid.Row="3"/>
     </Grid>
 </Window>
