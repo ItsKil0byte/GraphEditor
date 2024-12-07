@@ -95,8 +95,26 @@ namespace GraphEditor.Windows
             // Кликнули на ребро
             else if (clickedEdge != null)
             {
-                selectedEdge = clickedEdge;
-                HighlightEdge(clickedEdge);
+                // Первое нажатие на ребро
+                if (selectedEdge != clickedEdge)
+                {
+                    selectedEdge = clickedEdge;
+                    HighlightEdge(clickedEdge);
+                }
+                // Повторное нажатие на ребро
+                else
+                {
+                    WeightWindow weightWindow = new(clickedEdge.Weight);
+
+                    if (weightWindow.ShowDialog() == true)
+                    {
+                        clickedEdge.Weight = weightWindow.NewWeight;
+                        RedrawGraph();
+                    }
+
+                    selectedEdge = null;
+                }
+
                 selectedVertex = null;
             }
             // Кликнули на пустоту
@@ -210,18 +228,36 @@ namespace GraphEditor.Windows
             direction.Normalize();
 
             // Смещение к центру вершин
-            double offsetX = direction.X * VertexRadius;
-            double offsetY = direction.Y * VertexRadius;
+            double lineOffsetX = direction.X * VertexRadius;
+            double lineOffsetY = direction.Y * VertexRadius;
 
             Line line = new()
             {
-                X1 = edge.Start.X + offsetX, X2 = edge.End.X - offsetX,
-                Y1 = edge.Start.Y + offsetY, Y2 = edge.End.Y - offsetY,
+                X1 = edge.Start.X + lineOffsetX, X2 = edge.End.X - lineOffsetX,
+                Y1 = edge.Start.Y + lineOffsetY, Y2 = edge.End.Y - lineOffsetY,
                 Stroke = Brushes.Black,
                 StrokeThickness = 2
             };
 
             GraphCanvas.Children.Add(line);
+
+            TextBlock weightTextBlock = new()
+            {
+                Text = edge.Weight.ToString(),
+            };
+
+            // Определение середины линии
+            double midX = (edge.Start.X + edge.End.X) / 2;
+            double midY = (edge.Start.Y + edge.End.Y) / 2;
+
+            // Смещение в зависимости от наклона линии
+            double textOffsetX = Math.Abs(edge.End.Y - edge.Start.Y) > Math.Abs(edge.End.X - edge.Start.X) ? 10 : 0;
+            double textOffsetY = Math.Abs(edge.End.X - edge.Start.X) > Math.Abs(edge.End.Y - edge.Start.Y) ? 10 : -10;
+
+            Canvas.SetLeft(weightTextBlock, midX - weightTextBlock.ActualWidth / 2 + textOffsetX);
+            Canvas.SetTop(weightTextBlock, midY - weightTextBlock.ActualHeight / 2 + textOffsetY);
+
+            GraphCanvas.Children.Add(weightTextBlock);
         }
 
         private void HighlightEdge(Edge edge)
@@ -232,11 +268,11 @@ namespace GraphEditor.Windows
                 X2 = edge.End.X,
                 Y1 = edge.Start.Y,
                 Y2 = edge.End.Y,
-                Stroke = Brushes.Blue,
-                StrokeThickness = 3
+                Stroke = Brushes.Red,
+                StrokeThickness = 5
             };
 
-            GraphCanvas.Children.Add(highlightLine);
+            GraphCanvas.Children.Insert(0, highlightLine);
         }
 
         private void RedrawGraph()
@@ -275,7 +311,7 @@ namespace GraphEditor.Windows
                 {
                     GraphCanvas.Children.Remove(ellipse);
                 }
-                else if (child is Line line && line.Stroke == Brushes.Blue)
+                else if (child is Line line && line.Stroke == Brushes.Red)
                 {
                     GraphCanvas.Children.Remove(line);
                 }
