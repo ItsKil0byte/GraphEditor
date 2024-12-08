@@ -18,7 +18,7 @@
             <RowDefinition Height="160*"/>
         </Grid.RowDefinitions>
 
-        <GroupBox Header="Интсрументы" BorderThickness="3" Margin="5,5,5,5" Padding="5">
+        <GroupBox x:Name="ToolBox" Header="Интсрументы" BorderThickness="3" Margin="5,5,5,5" Padding="5">
             <StackPanel>
                 <Button Content="Сохранить" Height="40" Click="SaveButton_Click" Margin="5"/>
                 <Button Content="Загрузить" Height="40" Click="LoadButton_Click" Margin="5"/>
@@ -29,20 +29,21 @@
 
         <GroupBox Grid.Row="1" Header="Алгоритмы" BorderThickness="3" Margin="5,2,5,5" Padding="5">
             <StackPanel>
-                <ComboBox Height="40" Margin="5">
-
+                <ComboBox x:Name="AlgSelector" SelectedIndex="0" Height="40" Margin="5" VerticalContentAlignment="Center" HorizontalContentAlignment="Center">
+                    <ComboBoxItem Content="Обход в глубину"/>
+                    <ComboBoxItem Content="Обход в ширину"/>
                 </ComboBox>
 
-                <Button Content="Запустить" Height="45" Margin="5"/>
+                <Button x:Name="StartButton" Content="Запустить" Height="45" Click="StartButton_Click" Margin="5"/>
             </StackPanel>
         </GroupBox>
 
         <GroupBox Grid.Row="2" Header="Пояснение" BorderThickness="3" Margin="5,2,5,5" Padding="5">
-            <TextBox x:Name="StepsTextBox" FontWeight="Bold" IsReadOnly="True" TextWrapping="Wrap" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
+            <TextBox x:Name="StepsTextBox" IsReadOnly="True" TextWrapping="Wrap" VerticalContentAlignment="Top" HorizontalContentAlignment="Left" TextChanged="StepsTextBox_TextChanged"/>
         </GroupBox>
 
         <GroupBox Grid.Column="1" Grid.RowSpan="3" Header="Граф" BorderThickness="3" Margin="0,5,5,5" Padding="5">
-            <Canvas Name="GraphCanvas" Background="White" Focusable="True" 
+            <Canvas x:Name="GraphCanvas" Background="White" Focusable="True" 
                     MouseRightButtonDown="GraphCanvas_RightClick"
                     MouseLeftButtonDown="GraphCanvas_LeftClick"
                     MouseDown="GraphCanvas_MouseDown"

@@ -26,6 +26,9 @@ namespace GraphEditor
         private Vertex? draggingVertex = null;
         private bool isDragging = false;
 
+        private bool IsAlgorithmRunning = false;
+        private CancellationTokenSource? cancellationTokenSource;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -505,6 +508,183 @@ namespace GraphEditor
                     GraphCanvas.Children.Remove(line);
                 }
             }
+        }
+
+        private async Task DepthFirstSearchAsync(Vertex startVertex)
+        {
+            HashSet<Vertex> visited = [];
+            Stack<Vertex> stack = [];
+            stack.Push(startVertex);
+
+            cancellationTokenSource = new CancellationTokenSource();
+            CancellationToken cancellationToken = cancellationTokenSource.Token;
+
+            StepsTextBox.Clear();
+            StepsTextBox.AppendText("Алгоритм: Обход в глубину (DFS)\n");
+            StepsTextBox.AppendText("Идея: Двигаемся как можно глубже по рёбрам, возвращаясь назад, если больше нет вариантов.\n\n");
+
+            await Task.Delay(1500);
+
+            while (stack.Count > 0)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    StepsTextBox.AppendText("Процесс остановлен пользователем.\n");
+                    return;
+                }
+
+                Vertex currentVertex = stack.Pop();
+                if (!visited.Contains(currentVertex))
+                {
+                    visited.Add(currentVertex);
+                    HighlightVertex(currentVertex); // Подсветить вершину
+                    StepsTextBox.AppendText($"Посещена вершина: {currentVertex.Id}\n");
+                    await Task.Delay(1500); // Задержка
+
+                    foreach (var edge in graph.Edges.Where(e => e.Start == currentVertex || e.End == currentVertex))
+                    {
+                        Vertex neighbor = edge.Start == currentVertex ? edge.End : edge.Start;
+                        if (!visited.Contains(neighbor))
+                        {
+                            stack.Push(neighbor);
+                            HighlightEdge(edge); // Подсветить ребро
+                            StepsTextBox.AppendText($"Переходим по рёбру от вершины {currentVertex.Id} к вершине {neighbor.Id}.\n");
+                            await Task.Delay(1500); // Задержка
+                        }
+                        else
+                        {
+                            StepsTextBox.AppendText($"Вершина {currentVertex.Id} уже посещена. Возвращаемся назад.\n");
+                        }
+                    }
+                }
+            }
+
+            StepsTextBox.AppendText("\nОбход в глубину завершён: все вершины, до которых можно добраться, посещены.\n");
+        }
+
+        private async Task BreadthFirstSearchAsync(Vertex startVertex)
+        {
+            HashSet<Vertex> visited = [];
+            Queue<Vertex> queue = [];
+            queue.Enqueue(startVertex);
+
+            cancellationTokenSource = new CancellationTokenSource();
+            CancellationToken cancellationToken = cancellationTokenSource.Token;
+
+            StepsTextBox.Clear();
+            StepsTextBox.AppendText("Алгоритм: Обход в ширину (BFS)\n");
+            StepsTextBox.AppendText("Идея: Исследуем вершины слоями — сначала ближайших соседей, затем их соседей и так далее.\n\n");
+
+            await Task.Delay(1500);
+
+            while (queue.Count > 0)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    StepsTextBox.AppendText("Процесс остановлен пользователем.\n");
+                    return;
+                }
+
+                Vertex currentVertex = queue.Dequeue();
+                if (!visited.Contains(currentVertex))
+                {
+                    visited.Add(currentVertex);
+                    HighlightVertex(currentVertex); // Подсветить вершину
+                    StepsTextBox.AppendText($"Посещена вершина: {currentVertex.Id}\n");
+                    await Task.Delay(1500); // Задержка
+
+                    foreach (var edge in graph.Edges.Where(e => e.Start == currentVertex || e.End == currentVertex))
+                    {
+                        Vertex neighbor = edge.Start == currentVertex ? edge.End : edge.Start;
+                        if (!visited.Contains(neighbor))
+                        {
+                            queue.Enqueue(neighbor);
+                            HighlightEdge(edge); // Подсветить ребро
+                            StepsTextBox.AppendText($"Добавляем в очередь вершину {neighbor.Id}, соседнюю с вершиной {currentVertex.Id}.\n");
+                            await Task.Delay(1500); // Задержка
+                        }
+                        else
+                        {
+                            StepsTextBox.AppendText($"Вершина {currentVertex.Id} уже посещена.\n");
+                        }
+                    }
+                }
+            }
+
+            StepsTextBox.AppendText("\nОбход в ширину завершён: все вершины, до которых можно добраться, посещены.\n");
+        }
+
+        private async void StartButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (IsAlgorithmRunning)
+            {
+                cancellationTokenSource?.Cancel();
+                IsAlgorithmRunning = false;
+                StartButton.Content = "Запустить";
+                UnblockUIElements();
+                return;
+            }
+
+            IsAlgorithmRunning = true;
+            StartButton.Content = "Остановить";
+            BlockUIElements();
+
+            string? selectedAlgorithm = (AlgSelector.SelectedItem as ComboBoxItem)?.Content.ToString();
+
+            if (selectedAlgorithm == "Обход в глубину")
+            {
+                if (selectedVertex != null)
+                {
+                    await DepthFirstSearchAsync(selectedVertex);
+                }
+                else
+                {
+                    MessageBox.Show(
+                        "Перед началом обхода необходимо выбрать вершину", "Ошибка",
+                        MessageBoxButton.OK, MessageBoxImage.Warning
+                    );
+                }
+            }
+            else if (selectedAlgorithm == "Обход в ширину")
+            {
+                if (selectedVertex != null)
+                {
+                    await BreadthFirstSearchAsync(selectedVertex);
+                }
+                else
+                {
+                    MessageBox.Show(
+                        "Перед началом обхода необходимо выбрать вершину", "Ошибка",
+                        MessageBoxButton.OK, MessageBoxImage.Warning
+                    );
+                }
+            }
+
+            IsAlgorithmRunning = false;
+            StartButton.Content = "Запустить";
+            selectedVertex = null;
+            UnblockUIElements();
+
+            ClearHighlight();
+        }
+
+        private void BlockUIElements()
+        {
+            ToolBox.IsEnabled = false;
+            GraphCanvas.IsEnabled = false;
+            AlgSelector.IsEnabled = false;
+        }
+
+        private void UnblockUIElements()
+        {
+            ToolBox.IsEnabled = true;
+            GraphCanvas.IsEnabled = true;
+            AlgSelector.IsEnabled = true;
+        }
+
+        private void StepsTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            StepsTextBox.ScrollToEnd();
         }
     }
 }
