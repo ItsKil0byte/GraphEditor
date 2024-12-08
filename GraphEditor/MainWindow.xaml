@@ -3,20 +3,51 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:GraphEditor"
+        xmlns:local="clr-namespace:GraphEditor.Windows"
         mc:Ignorable="d"
-        Title="Лабораторная №5 | Выбор задания" Height="450" Width="350" ResizeMode="CanMinimize" FontSize="16">
+        KeyDown="GraphCanvas_KeyDown"
+        Title="Редактор графов" Height="750" Width="1150" ResizeMode="CanMinimize" FontSize="16">
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="0.35*"/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition/>
-            <RowDefinition/>
-            <RowDefinition/>
-            <RowDefinition/>
+            <RowDefinition Height="130*"/>
+            <RowDefinition Height="80*"/>
+            <RowDefinition Height="160*"/>
         </Grid.RowDefinitions>
 
-        <Label Content="Выберите задание:" FontWeight="Bold" FontSize="24" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-        <Button x:Name="GraphButton" Content="Редактор графов" Margin="15" FontWeight="Bold" Grid.Row="1" Click="GraphButton_Click"/>
-        <Button x:Name="TransportNetworksButton" Content="Редактор транспортных сетей" Margin="15" FontWeight="Bold" Grid.Row="2"/>
-        <Button x:Name="SpanningTreeButton" Content="Остовное дерево" Margin="15" FontWeight="Bold" Grid.Row="3"/>
+        <GroupBox Header="Интсрументы" BorderThickness="3" Margin="5,5,5,5" Padding="5">
+            <StackPanel>
+                <Button Content="Сохранить" Height="40" Click="SaveButton_Click" Margin="5"/>
+                <Button Content="Загрузить" Height="40" Click="LoadButton_Click" Margin="5"/>
+                <Button Content="Очистить" Height="40" Click="ClearButton_Click" Margin="5"/>
+                <Button Content="Справка" Height="40" Margin="5"/>
+            </StackPanel>
+        </GroupBox>
+
+        <GroupBox Grid.Row="1" Header="Алгоритмы" BorderThickness="3" Margin="5,2,5,5" Padding="5">
+            <StackPanel>
+                <ComboBox Height="40" Margin="5">
+
+                </ComboBox>
+
+                <Button Content="Запустить" Height="45" Margin="5"/>
+            </StackPanel>
+        </GroupBox>
+
+        <GroupBox Grid.Row="2" Header="Пояснение" BorderThickness="3" Margin="5,2,5,5" Padding="5">
+            <TextBox x:Name="StepsTextBox" FontWeight="Bold" IsReadOnly="True" TextWrapping="Wrap" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
+        </GroupBox>
+
+        <GroupBox Grid.Column="1" Grid.RowSpan="3" Header="Граф" BorderThickness="3" Margin="0,5,5,5" Padding="5">
+            <Canvas Name="GraphCanvas" Background="White" Focusable="True" 
+                    MouseRightButtonDown="GraphCanvas_RightClick"
+                    MouseLeftButtonDown="GraphCanvas_LeftClick"
+                    MouseDown="GraphCanvas_MouseDown"
+                    MouseMove="GraphCanvas_MouseMove"
+                    MouseUp="GraphCanvas_MouseUp"/>
+        </GroupBox>
     </Grid>
 </Window>
