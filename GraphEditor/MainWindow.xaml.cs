@@ -719,17 +719,18 @@ namespace GraphEditor
             priorityQueue.Enqueue(startVertex, 0);
 
             StepsTextBox.Clear();
-            StepsTextBox.AppendText($"Поиск кратчайшего пути между вершинами {startVertex.Id} и {endVertex.Id}.\n");
-            StepsTextBox.AppendText("Присваиваем всем вершинам вес = 0.\n");
+            StepsTextBox.AppendText($"Начинаем поиск кратчайшего пути между вершинами {startVertex.Id} и {endVertex.Id}.\n");
+            StepsTextBox.AppendText("Инициализируем расстояния до всех вершин как бесконечность.\n");
+            StepsTextBox.AppendText($"Расстояние до вершины {startVertex.Id} установлено на 0.\n");
 
             while (priorityQueue.Count > 0)
             {
                 Vertex currentVertex = priorityQueue.Dequeue();
                 visited.Add(currentVertex);
 
-                HighlightVertex(currentVertex); // Подсветить текущую вершину
+                HighlightVertex(currentVertex);
                 StepsTextBox.AppendText($"Выбрана вершина {currentVertex.Id} с весом {distances[currentVertex]}.\n");
-                await Task.Delay(5500); // Задержка для визуализации
+                await Task.Delay(5500);
 
                 foreach (var edge in graph.Edges.Where(e => e.Start == currentVertex || e.End == currentVertex))
                 {
@@ -743,19 +744,25 @@ namespace GraphEditor
                     {
                         distances[neighbor] = newDist;
                         priorityQueue.Enqueue(neighbor, newDist);
-                        HighlightEdge(edge); // Подсветить текущее ребро
-                        StepsTextBox.AppendText($"Обновлен вес вершины {neighbor.Id} до {newDist}.\n");
-                        await Task.Delay(5500); // Задержка для визуализации
+                        HighlightEdge(edge);
+                        StepsTextBox.AppendText($"Обновлен вес вершины {neighbor.Id} до {newDist} (через вершину {currentVertex.Id}).\n");
+                        await Task.Delay(5500);
+                    }
+                    else
+                    {
+                        StepsTextBox.AppendText($"Вес вершины {neighbor.Id} не обновлен (текущий вес: {distances[neighbor]}, а новый вес: {newDist}), что нам не подходит.\n");
+                        await Task.Delay(5500);
                     }
                 }
             }
 
-            // Подсветить минимальный путь
             Vertex pathVertex = endVertex;
             List<Edge> pathEdges = new();
 
+            StepsTextBox.AppendText($"Восстанавливаем путь от вершины {endVertex.Id} к вершине {startVertex.Id}.\n");
             while (pathVertex != startVertex)
             {
+                bool found = false;
                 foreach (var edge in graph.Edges.Where(e => e.Start == pathVertex || e.End == pathVertex))
                 {
                     Vertex neighbor = edge.Start == pathVertex ? edge.End : edge.Start;
@@ -763,18 +770,25 @@ namespace GraphEditor
                     {
                         pathEdges.Add(edge);
                         pathVertex = neighbor;
+                        found = true;
+                        StepsTextBox.AppendText($"Переход к вершине {neighbor.Id} через ребро с весом {edge.Weight}.\n");
+                        await Task.Delay(5500);
                         break;
                     }
+                }
+                if (!found)
+                {
+                    StepsTextBox.AppendText($"Путь не найден от вершины {pathVertex.Id}.\n");
+                    break;
                 }
             }
 
             foreach (var edge in pathEdges)
             {
-                HighlightEdge(edge); // Подсветить ребро минимального пути
+                HighlightEdge(edge);
             }
 
             StepsTextBox.AppendText($"Минимальный путь найден! Длина пути: {distances[endVertex]}.\n");
         }
- 
     }
 }
