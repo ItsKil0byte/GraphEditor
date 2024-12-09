@@ -630,7 +630,29 @@ namespace GraphEditor
             BlockUIElements();
 
             string? selectedAlgorithm = (AlgSelector.SelectedItem as ComboBoxItem)?.Content.ToString();
+            
+            if (selectedAlgorithm == "Поиск кратчайшего пути")
+            {
+                VertexSelectionDialog dialog = new();
+                if (dialog.ShowDialog() == true)
+                {
+                    int? startId = dialog.StartVertexId;
+                    int? endId = dialog.EndVertexId;
 
+                    Vertex startVertex = graph.Vertices.FirstOrDefault(v => v.Id == startId);
+                    Vertex endVertex = graph.Vertices.FirstOrDefault(v => v.Id == endId);
+
+                    if (startVertex != null && endVertex != null)
+                    {
+                        await DijkstraAsync(startVertex, endVertex);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Одна или обе вершины не найдены.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+            
             if (selectedAlgorithm == "Обход в глубину")
             {
                 if (selectedVertex != null)
@@ -686,5 +708,73 @@ namespace GraphEditor
         {
             StepsTextBox.ScrollToEnd();
         }
+        
+        private async Task DijkstraAsync(Vertex startVertex, Vertex endVertex)
+        {
+            Dictionary<Vertex, int> distances = graph.Vertices.ToDictionary(v => v, v => int.MaxValue);
+            distances[startVertex] = 0;
+
+            HashSet<Vertex> visited = new();
+            PriorityQueue<Vertex, int> priorityQueue = new();
+            priorityQueue.Enqueue(startVertex, 0);
+
+            StepsTextBox.Clear();
+            StepsTextBox.AppendText($"Поиск кратчайшего пути между вершинами {startVertex.Id} и {endVertex.Id}.\n");
+            StepsTextBox.AppendText("Присваиваем всем вершинам вес = 0.\n");
+
+            while (priorityQueue.Count > 0)
+            {
+                Vertex currentVertex = priorityQueue.Dequeue();
+                visited.Add(currentVertex);
+
+                HighlightVertex(currentVertex); // Подсветить текущую вершину
+                StepsTextBox.AppendText($"Выбрана вершина {currentVertex.Id} с весом {distances[currentVertex]}.\n");
+                await Task.Delay(5500); // Задержка для визуализации
+
+                foreach (var edge in graph.Edges.Where(e => e.Start == currentVertex || e.End == currentVertex))
+                {
+                    Vertex neighbor = edge.Start == currentVertex ? edge.End : edge.Start;
+
+                    if (visited.Contains(neighbor)) continue;
+
+                    int newDist = distances[currentVertex] + edge.Weight;
+
+                    if (newDist < distances[neighbor])
+                    {
+                        distances[neighbor] = newDist;
+                        priorityQueue.Enqueue(neighbor, newDist);
+                        HighlightEdge(edge); // Подсветить текущее ребро
+                        StepsTextBox.AppendText($"Обновлен вес вершины {neighbor.Id} до {newDist}.\n");
+                        await Task.Delay(5500); // Задержка для визуализации
+                    }
+                }
+            }
+
+            // Подсветить минимальный путь
+            Vertex pathVertex = endVertex;
+            List<Edge> pathEdges = new();
+
+            while (pathVertex != startVertex)
+            {
+                foreach (var edge in graph.Edges.Where(e => e.Start == pathVertex || e.End == pathVertex))
+                {
+                    Vertex neighbor = edge.Start == pathVertex ? edge.End : edge.Start;
+                    if (distances[neighbor] + edge.Weight == distances[pathVertex])
+                    {
+                        pathEdges.Add(edge);
+                        pathVertex = neighbor;
+                        break;
+                    }
+                }
+            }
+
+            foreach (var edge in pathEdges)
+            {
+                HighlightEdge(edge); // Подсветить ребро минимального пути
+            }
+
+            StepsTextBox.AppendText($"Минимальный путь найден! Длина пути: {distances[endVertex]}.\n");
+        }
+ 
     }
 }
