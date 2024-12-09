@@ -644,6 +644,7 @@ namespace GraphEditor
 
                     if (startVertex != null && endVertex != null)
                     {
+                        ClearGreenHighlight();
                         await DijkstraAsync(startVertex, endVertex);
                     }
                     else
@@ -657,6 +658,7 @@ namespace GraphEditor
             {
                 if (selectedVertex != null)
                 {
+                    ClearGreenHighlight();
                     await DepthFirstSearchAsync(selectedVertex);
                 }
                 else
@@ -671,6 +673,7 @@ namespace GraphEditor
             {
                 if (selectedVertex != null)
                 {
+                    ClearGreenHighlight();
                     await BreadthFirstSearchAsync(selectedVertex);
                 }
                 else
@@ -730,7 +733,7 @@ namespace GraphEditor
 
                 HighlightVertex(currentVertex);
                 StepsTextBox.AppendText($"Выбрана вершина {currentVertex.Id} с весом {distances[currentVertex]}.\n");
-                await Task.Delay(5500);
+                await Task.Delay(2500);
 
                 foreach (var edge in graph.Edges.Where(e => e.Start == currentVertex || e.End == currentVertex))
                 {
@@ -746,12 +749,12 @@ namespace GraphEditor
                         priorityQueue.Enqueue(neighbor, newDist);
                         HighlightEdge(edge);
                         StepsTextBox.AppendText($"Обновлен вес вершины {neighbor.Id} до {newDist} (через вершину {currentVertex.Id}).\n");
-                        await Task.Delay(5500);
+                        await Task.Delay(2500);
                     }
                     else
                     {
-                        StepsTextBox.AppendText($"Вес вершины {neighbor.Id} не обновлен (текущий вес: {distances[neighbor]}, а новый вес: {newDist}), что нам не подходит.\n");
-                        await Task.Delay(5500);
+                        StepsTextBox.AppendText($"Вес вершины {neighbor.Id} не обновлен (текущий вес: {distances[neighbor]}, а новый вес: {newDist}, что нам не подходит).\n");
+                        await Task.Delay(2500);
                     }
                 }
             }
@@ -760,6 +763,7 @@ namespace GraphEditor
             List<Edge> pathEdges = new();
 
             StepsTextBox.AppendText($"Восстанавливаем путь от вершины {endVertex.Id} к вершине {startVertex.Id}.\n");
+            ClearHighlight();
             while (pathVertex != startVertex)
             {
                 bool found = false;
@@ -772,6 +776,7 @@ namespace GraphEditor
                         pathVertex = neighbor;
                         found = true;
                         StepsTextBox.AppendText($"Переход к вершине {neighbor.Id} через ребро с весом {edge.Weight}.\n");
+                        HighlightShortestPathEdge(edge); // Вызываем новый метод для подсветки ребра
                         await Task.Delay(5500);
                         break;
                     }
@@ -789,6 +794,33 @@ namespace GraphEditor
             }
 
             StepsTextBox.AppendText($"Минимальный путь найден! Длина пути: {distances[endVertex]}.\n");
+        }
+        private void HighlightShortestPathEdge(Edge edge)
+        //чуть-чуть наговнокодил, ибо можно было методы Санька чуть переписать)
+        {
+            Line highlightLine = new()
+            {
+                X1 = edge.Start.X,
+                X2 = edge.End.X,
+                Y1 = edge.Start.Y,
+                Y2 = edge.End.Y,
+                Stroke = Brushes.Green,
+                StrokeThickness = 5
+            };
+
+            GraphCanvas.Children.Insert(0, highlightLine);
+        }
+        
+        private void ClearGreenHighlight() 
+        //чуть-чуть наговнокодил, ибо можно было методы Санька чуть переписать)
+        {
+            foreach (UIElement child in GraphCanvas.Children.OfType<UIElement>().ToList())
+            {
+                if (child is Line greenLine && greenLine.Stroke == Brushes.Green)
+                {
+                    GraphCanvas.Children.Remove(greenLine);
+                }
+            }
         }
     }
 }
