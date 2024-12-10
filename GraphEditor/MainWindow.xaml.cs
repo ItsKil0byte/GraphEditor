@@ -732,13 +732,22 @@ namespace GraphEditor
             StepsTextBox.AppendText("Инициализируем расстояния до всех вершин как бесконечность.\n");
             StepsTextBox.AppendText($"Расстояние до вершины {startVertex.Id} установлено на 0.\n");
 
+            cancellationTokenSource = new CancellationTokenSource();
+            CancellationToken cancellationToken = cancellationTokenSource.Token;
+
             while (priorityQueue.Count > 0)
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    StepsTextBox.AppendText("\nПроцесс остановлен пользователем.\n");
+                    return;
+                }
+
                 Vertex currentVertex = priorityQueue.Dequeue();
                 visited.Add(currentVertex);
 
                 HighlightVertex(currentVertex);
-                StepsTextBox.AppendText($"Выбрана вершина {currentVertex.Id} с весом {distances[currentVertex]}.\n");
+                StepsTextBox.AppendText($"\nВыбрана вершина {currentVertex.Id} с весом {distances[currentVertex]}.\n");
                 await Task.Delay(2500);
 
                 foreach (var edge in graph.Edges.Where(e => e.Start == currentVertex || e.End == currentVertex))
@@ -768,13 +777,20 @@ namespace GraphEditor
             Vertex pathVertex = endVertex;
             List<Edge> pathEdges = new();
 
-            StepsTextBox.AppendText($"Восстанавливаем путь от вершины {endVertex.Id} к вершине {startVertex.Id}.\n");
+            StepsTextBox.AppendText($"\nВосстанавливаем путь от вершины {endVertex.Id} к вершине {startVertex.Id}.\n");
+            StepsTextBox.AppendText("\n");
             ClearHighlight();
             while (pathVertex != startVertex)
             {
                 bool found = false;
                 foreach (var edge in graph.Edges.Where(e => e.Start == pathVertex || e.End == pathVertex))
                 {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        StepsTextBox.AppendText("Процесс остановлен пользователем.\n");
+                        return;
+                    }
+
                     Vertex neighbor = edge.Start == pathVertex ? edge.End : edge.Start;
                     if (distances[neighbor] + edge.Weight == distances[pathVertex])
                     {
@@ -799,7 +815,7 @@ namespace GraphEditor
                 HighlightEdge(edge);
             }
 
-            StepsTextBox.AppendText($"Минимальный путь найден! Длина пути: {distances[endVertex]}.\n");
+            StepsTextBox.AppendText($"\nМинимальный путь найден! Длина пути: {distances[endVertex]}.\n");
         }
         private void HighlightShortestPathEdge(Edge edge)
         //чуть-чуть наговнокодил, ибо можно было методы Санька чуть переписать)
@@ -831,11 +847,9 @@ namespace GraphEditor
         
         private async Task MinimumSpanningTreeAsync()
         {
-            // Преобразуем ребра в список с весами и ID
             var edgesWithId = graph.Edges.Select((edge, index) => new EdgeWithId(edge.Start, edge.End, index + 1) { Weight = edge.Weight }).ToList();
             var sortedEdges = edgesWithId.OrderBy(e => e.Weight).ToList();
 
-            // Структура для хранения родительских вершин
             Dictionary<Vertex, Vertex> parent = new();
             HashSet<Vertex> visited = new();
             StepsTextBox.Clear();
@@ -843,10 +857,9 @@ namespace GraphEditor
 
             foreach (var vertex in graph.Vertices)
             {
-                parent[vertex] = vertex; // Инициализация родителя
+                parent[vertex] = vertex; 
             }
 
-            // Функция для нахождения корня
             Vertex Find(Vertex vertex)
             {
                 if (parent[vertex] != vertex)
@@ -856,26 +869,74 @@ namespace GraphEditor
                 return parent[vertex];
             }
 
-            // Основной цикл алгоритма
+            async Task HighlightTemporarily(EdgeWithId edge)
+            {
+                HighlightChecker(edge, Brushes.Blue);
+                await Task.Delay(2000); 
+            }
+
+            cancellationTokenSource = new CancellationTokenSource();
+            CancellationToken cancellationToken = cancellationTokenSource.Token;
+            
             foreach (var edge in sortedEdges)
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    StepsTextBox.AppendText("\nПроцесс остановлен пользователем.\n");
+                    return;
+                }
+
                 Vertex root1 = Find(edge.Start);
                 Vertex root2 = Find(edge.End);
 
-                if (root1 != root2) // Если ребра не создают цикл
+                StepsTextBox.AppendText($"\nПроверяем ребро между вершинами №{edge.Start.Id} и №{edge.End.Id} с весом {edge.Weight}.\n");
+                await HighlightTemporarily(edge);
+
+                if (root1 != root2)
                 {
                     visited.Add(edge.Start);
                     visited.Add(edge.End);
                     parent[root1] = root2;
-
-                    // Визуализация
-                    HighlightShortestPathEdge(edge); // Подсветка ребра
-                    StepsTextBox.AppendText($"Выбрано ребро с ID {edge.Id} и весом {edge.Weight}.\n");
-                    await Task.Delay(1500); // Задержка для визуализации
+                    
+                    HighlightShortestPathEdge(edge); 
+                    StepsTextBox.AppendText($"Добавляем ребро между вершинами №{edge.Start.Id} и №{edge.End.Id} в остовное дерево.\n");
+                    await Task.Delay(2500);
+                }
+                else
+                {
+                    StepsTextBox.AppendText($"Пропускаем ребро между вершинами №{edge.Start.Id} и №{edge.End.Id}, так как оно создает цикл.\n");
                 }
             }
 
-            StepsTextBox.AppendText("Минимальное остовное дерево построено.\n");
+            StepsTextBox.AppendText("\nМинимальное остовное дерево построено.\n");
+        }
+
+        
+        private void HighlightChecker(Edge edge, Brush color)
+        //ещё чуть чуть наговнокодил)))))))))
+        {
+            Line highlightLine = new()
+            {
+                X1 = edge.Start.X,
+                X2 = edge.End.X,
+                Y1 = edge.Start.Y,
+                Y2 = edge.End.Y,
+                Stroke = color,
+                StrokeThickness = 5
+            };
+
+            GraphCanvas.Children.Insert(0, highlightLine);
+            
+            if (color == Brushes.Blue)
+            {
+                Task.Delay(2000).ContinueWith(_ =>
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        GraphCanvas.Children.Remove(highlightLine);
+                    });
+                });
+            }
         }
     }
 }
