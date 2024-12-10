@@ -654,7 +654,13 @@ namespace GraphEditor
                 }
             }
             
-            if (selectedAlgorithm == "Обход в глубину")
+            else if (selectedAlgorithm == "Минимальное остовное дерево")
+            {
+                ClearGreenHighlight();
+                await MinimumSpanningTreeAsync();
+            }
+            
+            else if (selectedAlgorithm == "Обход в глубину")
             {
                 if (selectedVertex != null)
                 {
@@ -821,6 +827,55 @@ namespace GraphEditor
                     GraphCanvas.Children.Remove(greenLine);
                 }
             }
+        }
+        
+        private async Task MinimumSpanningTreeAsync()
+        {
+            // Преобразуем ребра в список с весами и ID
+            var edgesWithId = graph.Edges.Select((edge, index) => new EdgeWithId(edge.Start, edge.End, index + 1) { Weight = edge.Weight }).ToList();
+            var sortedEdges = edgesWithId.OrderBy(e => e.Weight).ToList();
+
+            // Структура для хранения родительских вершин
+            Dictionary<Vertex, Vertex> parent = new();
+            HashSet<Vertex> visited = new();
+            StepsTextBox.Clear();
+            StepsTextBox.AppendText("Алгоритм: Поиск минимального остовного дерева (Краскал)\n");
+
+            foreach (var vertex in graph.Vertices)
+            {
+                parent[vertex] = vertex; // Инициализация родителя
+            }
+
+            // Функция для нахождения корня
+            Vertex Find(Vertex vertex)
+            {
+                if (parent[vertex] != vertex)
+                {
+                    parent[vertex] = Find(parent[vertex]);
+                }
+                return parent[vertex];
+            }
+
+            // Основной цикл алгоритма
+            foreach (var edge in sortedEdges)
+            {
+                Vertex root1 = Find(edge.Start);
+                Vertex root2 = Find(edge.End);
+
+                if (root1 != root2) // Если ребра не создают цикл
+                {
+                    visited.Add(edge.Start);
+                    visited.Add(edge.End);
+                    parent[root1] = root2;
+
+                    // Визуализация
+                    HighlightShortestPathEdge(edge); // Подсветка ребра
+                    StepsTextBox.AppendText($"Выбрано ребро с ID {edge.Id} и весом {edge.Weight}.\n");
+                    await Task.Delay(1500); // Задержка для визуализации
+                }
+            }
+
+            StepsTextBox.AppendText("Минимальное остовное дерево построено.\n");
         }
     }
 }

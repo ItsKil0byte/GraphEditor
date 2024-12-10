@@ -33,6 +33,7 @@
                     <ComboBoxItem Content="Обход в глубину"/>
                     <ComboBoxItem Content="Обход в ширину"/>
                     <ComboBoxItem Content="Поиск кратчайшего пути"/>
+                    <ComboBoxItem Content="Минимальное остовное дерево"/>
                 </ComboBox>
 
                 <Button x:Name="StartButton" Content="Запустить" Height="45" Click="StartButton_Click" Margin="5"/>
