@@ -112,11 +112,14 @@ namespace GraphEditor
                 // Повторное нажатие на ребро
                 else
                 {
-                    WeightWindow weightWindow = new(clickedEdge.Weight);
+                    WeightWindow weightWindow = new(clickedEdge.Weight, clickedEdge.Capacity, clickedEdge.isDirectionShowed, clickedEdge.Direction);
 
                     if (weightWindow.ShowDialog() == true)
                     {
                         clickedEdge.Weight = weightWindow.NewWeight;
+                        clickedEdge.Capacity = weightWindow.NewCapacity;
+                        clickedEdge.isDirectionShowed = weightWindow.isDirectionShowed;
+                        clickedEdge.Direction = weightWindow.NewDirection;
                         RedrawGraph();
                     }
 
@@ -407,6 +410,7 @@ namespace GraphEditor
             Line line = new()
             {
                 X1 = edge.Start.X + lineOffsetX,
+                
                 X2 = edge.End.X - lineOffsetX,
                 Y1 = edge.Start.Y + lineOffsetY,
                 Y2 = edge.End.Y - lineOffsetY,
@@ -416,9 +420,56 @@ namespace GraphEditor
 
             GraphCanvas.Children.Add(line);
 
+            if (edge.isDirectionShowed)
+            {
+                // Координаты конца или начала стрелки в зависимости от edge.Direction
+                double arrowX, arrowY;
+                double baseX, baseY;
+
+                if (edge.Direction)
+                {
+                    arrowX = line.X1;
+                    arrowY = line.Y1;
+                    baseX = line.X2;
+                    baseY = line.Y2;
+                }
+                else
+                {
+                    arrowX = line.X2;
+                    arrowY = line.Y2;
+                    baseX = line.X1;
+                    baseY = line.Y1;
+                }
+
+                // Углы для построения треугольной стрелки
+                double angle = Math.Atan2(baseY - arrowY, baseX - arrowX);
+                double arrowLength = 10; // Длина стрелки
+                double arrowWidth = 5;   // Ширина стрелки
+
+                Point arrowTip = new Point(arrowX, arrowY);
+                Point arrowLeft = new Point(
+                    arrowX + arrowLength * Math.Cos(angle + Math.PI / 6),
+                    arrowY + arrowLength * Math.Sin(angle + Math.PI / 6)
+                );
+                Point arrowRight = new Point(
+                    arrowX + arrowLength * Math.Cos(angle - Math.PI / 6),
+                    arrowY + arrowLength * Math.Sin(angle - Math.PI / 6)
+                );
+
+                // Создаем треугольник для стрелки
+                Polygon arrow = new Polygon
+                {
+                    Points = new PointCollection { arrowTip, arrowLeft, arrowRight },
+                    Fill = Brushes.Black
+                };
+
+                // Добавляем стрелку в Canvas
+                GraphCanvas.Children.Add(arrow);
+            }
+
             TextBlock weightTextBlock = new()
             {
-                Text = edge.Weight.ToString(),
+                Text = edge.Weight.ToString() + (edge.Capacity != 0 ? "/" + edge.Capacity.ToString() : string.Empty)
             };
 
             // Определение середины линии
@@ -891,7 +942,7 @@ namespace GraphEditor
 
                 StepsTextBox.AppendText($"\nПроверяем ребро между вершинами №{edge.Start.Id} и №{edge.End.Id} с весом {edge.Weight}.\n");
                 await HighlightTemporarily(edge);
-
+                
                 if (root1 != root2)
                 {
                     visited.Add(edge.Start);

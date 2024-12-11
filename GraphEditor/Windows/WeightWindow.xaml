@@ -5,9 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GraphEditor.Windows"
         mc:Ignorable="d"
-        Title="Редактирование веса" Height="150" Width="235" ResizeMode="NoResize" FontSize="16">
+        Title="Редактирование веса" Height="300" Width="235" ResizeMode="NoResize" FontSize="16">
     <Grid>
-        <Grid>
+        <Grid Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
@@ -15,12 +15,18 @@
             <Grid.RowDefinitions>
                 <RowDefinition/>
                 <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
             </Grid.RowDefinitions>
 
-            <TextBlock Text="Новый вес:" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10"/>
-            <TextBox x:Name="WeightTextBox" Grid.Column="1" Margin="10" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
-            <Button x:Name="CancelButton" Content="Отмена" Grid.Row="1" Grid.Column="0" Margin="10" Click="CancelButton_Click"/>
-            <Button x:Name="OkButton" Content="Oк" Grid.Row="1" Grid.Column="1" Margin="10" Click="OkButton_Click"/>
+            <TextBlock Text="Новый вес:" FontWeight="Bold" VerticalAlignment="Top" HorizontalAlignment="Center" Height="28" RenderTransformOrigin="0.502,-0.416" Margin="0,17,0,0" Width="89"/>
+            <TextBox x:Name="WeightTextBox" Grid.Column="1" Margin="10,10,10,10" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
+            <Button x:Name="CancelButton" Content="Отмена" Grid.Row="3" Grid.Column="0" Margin="10,10,10,10" Click="CancelButton_Click"/>
+            <Button x:Name="OkButton" Content="Oк" Grid.Row="3" Grid.Column="1" Margin="10,10,10,10" Click="OkButton_Click" RenderTransformOrigin="0.488,1.863"/>
+            <TextBlock Text="Новая пропускная способность:" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center" Height="70"  Width="110" Grid.Row="1" TextWrapping="Wrap"/>
+            <TextBox x:Name="CapacityTextBox" Grid.Column="1" Margin="10,10,10,10" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" RenderTransformOrigin="0.444,2.18" Grid.Row="1"/>
+            <CheckBox x:Name="ShowDirectionCheckBox" Content="Показать направление" HorizontalAlignment="Left" Margin="4,34,0,0" Grid.Row="2" VerticalAlignment="Top" Grid.ColumnSpan="2" FontSize="16"/>
+            <CheckBox x:Name="InvertCheckBox" Content="Инвертировать направление" HorizontalAlignment="Left" Margin="4,6,0,0" Grid.Row="2" VerticalAlignment="Top" Grid.ColumnSpan="2" Width="221" FontSize="14"/>
         </Grid>
     </Grid>
 </Window>
