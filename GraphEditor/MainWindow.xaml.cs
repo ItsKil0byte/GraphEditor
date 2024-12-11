@@ -183,9 +183,13 @@ namespace GraphEditor
             {
                 Point currentPosition = e.GetPosition(GraphCanvas);
 
+                // Ограничиваем координаты в пределах холста
+                double limitX = Math.Max(15, Math.Min(currentPosition.X, GraphCanvas.ActualWidth - 15));
+                double limitY = Math.Max(15, Math.Min(currentPosition.Y, GraphCanvas.ActualHeight - 15));
+
                 // Обновляем координаты вершины
-                draggingVertex.X = currentPosition.X;
-                draggingVertex.Y = currentPosition.Y;
+                draggingVertex.X = limitX;
+                draggingVertex.Y = limitY;
 
                 RedrawGraph();
             }
@@ -988,6 +992,21 @@ namespace GraphEditor
                     });
                 });
             }
+        }
+
+        private void AboutButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Небольшая справка для пользователя
+            string aboutMessage =
+                "Управление графом:\n" +
+                "1. ПКМ по пустой области — создать вершину.\n" +
+                "2. ЛКМ на вершине, затем ЛКМ на другой вершине — создать ребро.\n" +
+                "3. Двойной ЛКМ по вершине — редактировать ID вершины.\n" +
+                "4. Двойной ЛКМ по ребру - редактировать вес ребра.\n" +
+                "5. ЛКМ по элементу + DEL - удалить ребро | вершину.\n" +
+                "6. Зажать ЛКМ + SHIFT - перемещать вершину.\n";
+
+            MessageBox.Show(aboutMessage, "Справка по управлению графом", MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 }
