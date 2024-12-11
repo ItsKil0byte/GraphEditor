@@ -23,7 +23,7 @@
                 <Button Content="Сохранить" Height="40" Click="SaveButton_Click" Margin="5"/>
                 <Button Content="Загрузить" Height="40" Click="LoadButton_Click" Margin="5"/>
                 <Button Content="Очистить" Height="40" Click="ClearButton_Click" Margin="5"/>
-                <Button Content="Справка" Height="40" Margin="5"/>
+                <Button Content="Справка" Height="40" Click="AboutButton_Click" Margin="5"/>
             </StackPanel>
         </GroupBox>
 
