@@ -714,6 +714,7 @@ namespace GraphEditor
                 VertexSelectionDialog dialog = new();
                 if (dialog.ShowDialog() == true)
                 {
+                    ShowAllDirections();
                     int? startId = dialog.StartVertexId;
                     int? endId = dialog.EndVertexId;
 
@@ -730,7 +731,6 @@ namespace GraphEditor
                         MessageBox.Show("Одна или обе вершины не найдены.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
-
             }
 
             else if (selectedAlgorithm == "Минимальное остовное дерево")
@@ -912,11 +912,15 @@ namespace GraphEditor
 
             while (true)
             {
+                RedrawGraph();
+
                 if (cancellationToken.IsCancellationRequested)
                 {
                     StepsTextBox.AppendText("\nПроцесс остановлен пользователем.\n");
                     return maxFlow;
                 }
+
+
 
                 // DFS для поиска увеличивающего пути
                 Dictionary<Vertex, Edge> parent = new();
@@ -929,7 +933,7 @@ namespace GraphEditor
                     break;
                 }
 
-                // Определяем минимальную остаточную пропускную способность на пути
+                // минимальнуя остаточнуя пропускнуя способность на пути
                 int pathFlow = int.MaxValue;
                 Vertex current = sink;
 
@@ -939,6 +943,7 @@ namespace GraphEditor
                     int residualCapacity = edge.Weight - flow[edge];
                     pathFlow = Math.Min(pathFlow, residualCapacity);
                     current = edge.Start == current ? edge.End : edge.Start;
+                    
                 }
 
                 StepsTextBox.AppendText($"\nМинимальная остаточная пропускная способность на пути: {pathFlow}.\n");
@@ -987,6 +992,16 @@ namespace GraphEditor
             }
 
             return false;
+        }
+
+        private void ShowAllDirections()
+        {
+            foreach (var edge in graph.Edges)
+            {
+                edge.isDirectionShowed = true;
+                edge.Capacity = 0;
+            }
+            RedrawGraph();
         }
 
         private void HighlightShortestPathEdge(Edge edge)
