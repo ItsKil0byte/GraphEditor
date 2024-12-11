@@ -32,6 +32,7 @@
                 <ComboBox x:Name="AlgSelector" SelectedIndex="0" Height="40" Margin="5" VerticalContentAlignment="Center" HorizontalContentAlignment="Center">
                     <ComboBoxItem Content="Обход в глубину"/>
                     <ComboBoxItem Content="Обход в ширину"/>
+                    <ComboBoxItem Content="Поиск максимального потока"/>
                     <ComboBoxItem Content="Поиск кратчайшего пути"/>
                     <ComboBoxItem Content="Минимальное остовное дерево"/>
                 </ComboBox>

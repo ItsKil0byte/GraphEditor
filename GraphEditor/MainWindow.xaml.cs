@@ -708,7 +708,31 @@ namespace GraphEditor
                     }
                 }
             }
-            
+
+            else if (selectedAlgorithm == "Поиск максимального потока")
+            {
+                VertexSelectionDialog dialog = new();
+                if (dialog.ShowDialog() == true)
+                {
+                    int? startId = dialog.StartVertexId;
+                    int? endId = dialog.EndVertexId;
+
+                    Vertex startVertex = graph.Vertices.FirstOrDefault(v => v.Id == startId);
+                    Vertex endVertex = graph.Vertices.FirstOrDefault(v => v.Id == endId);
+
+                    if (startVertex != null && endVertex != null)
+                    {
+                        ClearGreenHighlight();
+                        await FordFulkersonAsync(startVertex, endVertex);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Одна или обе вершины не найдены.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+
+            }
+
             else if (selectedAlgorithm == "Минимальное остовное дерево")
             {
                 ClearGreenHighlight();
@@ -872,6 +896,99 @@ namespace GraphEditor
 
             StepsTextBox.AppendText($"\nМинимальный путь найден! Длина пути: {distances[endVertex]}.\n");
         }
+
+        private async Task<int> FordFulkersonAsync(Vertex source, Vertex sink)
+        {
+            // Инициализация потока
+            Dictionary<Edge, int> flow = graph.Edges.ToDictionary(e => e, e => 0);
+
+            StepsTextBox.Clear();
+            StepsTextBox.AppendText($"Начинаем поиск максимального потока из вершины {source.Id} в вершину {sink.Id}.\n");
+
+            cancellationTokenSource = new CancellationTokenSource();
+            CancellationToken cancellationToken = cancellationTokenSource.Token;
+
+            int maxFlow = 0;
+
+            while (true)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    StepsTextBox.AppendText("\nПроцесс остановлен пользователем.\n");
+                    return maxFlow;
+                }
+
+                // DFS для поиска увеличивающего пути
+                Dictionary<Vertex, Edge> parent = new();
+                HashSet<Vertex> visited = new();
+                bool pathFound = FindAugmentingPathDFS(source, sink, visited, parent, flow);
+
+                if (!pathFound)
+                {
+                    StepsTextBox.AppendText("\nУвеличивающий путь не найден. Алгоритм завершён.\n");
+                    break;
+                }
+
+                // Определяем минимальную остаточную пропускную способность на пути
+                int pathFlow = int.MaxValue;
+                Vertex current = sink;
+
+                while (current != source)
+                {
+                    Edge edge = parent[current];
+                    int residualCapacity = edge.Weight - flow[edge];
+                    pathFlow = Math.Min(pathFlow, residualCapacity);
+                    current = edge.Start == current ? edge.End : edge.Start;
+                }
+
+                StepsTextBox.AppendText($"\nМинимальная остаточная пропускная способность на пути: {pathFlow}.\n");
+
+                // Обновляем потоки
+                current = sink;
+                while (current != source)
+                {
+                    Edge edge = parent[current];
+                    flow[edge] += pathFlow;
+                    edge.Capacity += pathFlow; // Обновляем использованную пропускную способность
+                    HighlightEdge(edge);
+                    StepsTextBox.AppendText($"Обновляем поток через ребро ({edge.Start.Id} -> {edge.End.Id}). Текущий поток: {flow[edge]}.\n");
+                    await Task.Delay(1500);
+
+                    current = edge.Start == current ? edge.End : edge.Start;
+                }
+
+                maxFlow += pathFlow;
+                StepsTextBox.AppendText($"\nТекущий максимальный поток: {maxFlow}.\n");
+            }
+
+            StepsTextBox.AppendText($"\nМаксимальный поток из вершины {source.Id} в вершину {sink.Id}: {maxFlow}.\n");
+            return maxFlow;
+        }
+
+        private bool FindAugmentingPathDFS(Vertex current, Vertex sink, HashSet<Vertex> visited, Dictionary<Vertex, Edge> parent, Dictionary<Edge, int> flow)
+        {
+            visited.Add(current);
+
+            if (current == sink)
+                return true;
+
+            foreach (var edge in graph.Edges.Where(e => e.Start == current || e.End == current))
+            {
+                Vertex neighbor = edge.Start == current ? edge.End : edge.Start;
+                int residualCapacity = edge.Weight - flow[edge];
+
+                if (!visited.Contains(neighbor) && residualCapacity > 0)
+                {
+                    parent[neighbor] = edge;
+
+                    if (FindAugmentingPathDFS(neighbor, sink, visited, parent, flow))
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
         private void HighlightShortestPathEdge(Edge edge)
         //чуть-чуть наговнокодил, ибо можно было методы Санька чуть переписать)
         {
